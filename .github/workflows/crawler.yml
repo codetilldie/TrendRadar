@@ -64,12 +64,17 @@ jobs:
           GITHUB_ACTIONS: true
         run: python main.py
 
-      - name: Commit and push if changes
-        run: |
+      - name: Commit if changes
+        run:
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add -A
-          git diff --quiet && git diff --staged --quiet || (
+          git diff --quiet && git diff --staged --quiet && exit 0
           git commit -m "Auto update by GitHub Actions at $(TZ=Asia/Shanghai date)"
-          git pull origin master --rebase
-          git push)
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
+          rebase: true  # 自动 rebase 再 push
