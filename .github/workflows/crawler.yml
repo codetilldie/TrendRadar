@@ -3,7 +3,7 @@ name: Hot News Crawler
 on:
   schedule:
     # 我们使用的是 github 官方提供的资源来进行的推送，而每个账号的资源是限额的，为了不被官方判定为滥用而面临封号的风险，不建议比半小时更低
-    - cron: "0 4,10 * * 1-5" #(周一到周五 12/15/18点跑一次)
+    - cron: "0 4,10 * * 1-5" #(周一到周五 12/18点跑一次)
   workflow_dispatch:
 
 # 添加权限设置
@@ -78,25 +78,3 @@ jobs:
           git commit -m "Auto update by GitHub Actions at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
           git pull origin master --rebase --autostash
           git push
-
-  deploy:
-    needs: crawl
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: './output'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v2
