@@ -9,6 +9,8 @@ on:
 # 添加权限设置
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   crawl:
@@ -64,23 +66,37 @@ jobs:
           GITHUB_ACTIONS: true
         run: python main.py
 
-      - name: Commit if changes
+      - name: Commit and push if changes
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add -A
-          git diff --quiet && git diff --staged --quiet && exit 0
-          git commit -m "Auto update by GitHub Actions at $(TZ=Asia/Shanghai date)"
-
-      - name: Commit if changes
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git add -A
-          git diff --quiet && git diff --staged --quiet && exit 0
-          git commit -m "Auto update by GitHub Actions at $(date -d 'TZ="Asia/Shanghai"' '+%Y-%m-%d %H:%M:%S')"
-      
-      - name: Pull rebase and push
-        run: |
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Auto update by GitHub Actions at $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
           git pull origin master --rebase --autostash
           git push
+
+  deploy:
+    needs: crawl
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: './output'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
