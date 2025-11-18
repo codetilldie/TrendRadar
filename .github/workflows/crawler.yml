@@ -3,7 +3,7 @@ name: Hot News Crawler
 on:
   schedule:
     # 我们使用的是 github 官方提供的资源来进行的推送，而每个账号的资源是限额的，为了不被官方判定为滥用而面临封号的风险，不建议比半小时更低
-    - cron: "0 2,4,7,10 * * 1-5" #(周一到周五 10/12/15/18点跑一次)
+    - cron: "0 4,10 * * 1-5" #(周一到周五 12/15/18点跑一次)
   workflow_dispatch:
 
 # 添加权限设置
@@ -72,9 +72,15 @@ jobs:
           git diff --quiet && git diff --staged --quiet && exit 0
           git commit -m "Auto update by GitHub Actions at $(TZ=Asia/Shanghai date)"
 
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: master
-          rebase: true  # 自动 rebase 再 push
+      - name: Commit if changes
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add -A
+          git diff --quiet && git diff --staged --quiet && exit 0
+          git commit -m "Auto update by GitHub Actions at $(date -d 'TZ="Asia/Shanghai"' '+%Y-%m-%d %H:%M:%S')"
+      
+      - name: Pull rebase and push
+        run: |
+          git pull origin master --rebase --autostash
+          git push
